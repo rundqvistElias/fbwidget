@@ -193,6 +193,14 @@
   async function renderWidget(container) {
     const limit = Math.min(20, Math.max(1, parseInt(container.dataset.limit || '5', 10)));
     const theme = container.dataset.theme === 'dark' ? 'dark' : 'light';
+    const skipKeywords = (container.dataset.skipKeywords || '')
+      .split(',')
+      .map(k => k.trim().toLowerCase())
+      .filter(Boolean);
+    const onlyKeywords = (container.dataset.onlyKeywords || '')
+      .split(',')
+      .map(k => k.trim().toLowerCase())
+      .filter(Boolean);
 
     container.className = 'fbw-wrap fbw-' + theme;
     renderLoading(container);
@@ -214,13 +222,20 @@
 
     container.replaceChildren(buildWidgetHeader(data.page));
 
-    if (!data.posts?.length) {
+    const posts = data.posts.filter(p => {
+      const msg = p.message.toLowerCase();
+      if (onlyKeywords.length && !onlyKeywords.some(k => msg.includes(k))) return false;
+      if (skipKeywords.length &&  skipKeywords.some(k => msg.includes(k))) return false;
+      return true;
+    });
+
+    if (!posts.length) {
       container.appendChild(buildElement('div', { className: 'fbw-empty', textContent: 'No posts found.' }));
       return;
     }
 
     const grid = buildElement('div', { className: 'fbw-grid' });
-    for (const post of data.posts) {
+    for (const post of posts) {
       grid.appendChild(buildCard(post, data.page));
     }
     container.appendChild(grid);
@@ -236,5 +251,10 @@
   } else {
     initWidgets();
   }
+
+  window.fbwidget = {
+    render: renderWidget,
+    resetCache: function () { fetchPromise = null; },
+  };
 
 })();
