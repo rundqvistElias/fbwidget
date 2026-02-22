@@ -13,7 +13,8 @@ fbwidget/
 ├── main.py          # Entry point — FastAPI app, routes
 ├── facebook.py      # Facebook Graph API client
 ├── static/
-│   └── widget.js    # The embeddable frontend widget
+│   ├── widget.js    # The embeddable frontend widget
+│   └── demo.html    # Demo page template (served by GET /)
 ├── .env             # Secret config (never commit this)
 ├── .env.example     # Template for .env
 └── requirements.txt
@@ -90,7 +91,7 @@ Website visitor's browser
 ## The Three Routes
 
 ### `GET /`
-A demo page showing a live embed and the embed code snippet. The server URL and page ID are injected dynamically — nothing is hardcoded.
+A demo page showing a live embed and the embed code snippet. The server reads `static/demo.html`, replaces the `__BASE_URL__` placeholder with the actual server URL (same mechanism as `widget.js`), and returns the result. Nothing is hardcoded.
 
 ### `GET /widget.js`
 Serves the JavaScript widget file. Before returning it, the server replaces the placeholder `__BASE_URL__` in the JS with the actual server URL (e.g. `http://localhost:8000`). This is how the widget knows where to send its API request, regardless of where the server is hosted.
@@ -127,13 +128,26 @@ Returns:
 
 This module handles all communication with Facebook's Graph API (`graph.facebook.com/v19.0`).
 
-**Token** — `_token()` reads `FB_ACCESS_TOKEN` from the environment. Must have `pages_read_engagement` permission.
+**Token** — `_get_access_token()` reads `FB_ACCESS_TOKEN` from the environment. Must have `pages_read_engagement` permission.
 
 **Page ID** — `get_page_id()` reads `FB_PAGE_ID` from the environment.
 
-**HTTP client** — Uses a shared `httpx.AsyncClient` instance (lazy-created, async). Reuses the TCP connection across requests.
+**HTTP client** — `_get_client()` returns a shared `httpx.AsyncClient` instance (lazy-created). Reuses the TCP connection across requests.
 
-**Error mapping** — `_check_error()` reads `error.code` from Facebook's response and raises typed Python exceptions (`RateLimitError`, `PageNotFoundError`, `TokenError`, `PermissionError`). `main.py` catches these and maps them to HTTP status codes (429, 404, 500, 403).
+**Error mapping** — `_raise_for_api_error()` reads `error.code` from Facebook's response and raises typed Python exceptions. `main.py` catches these and maps them to HTTP status codes:
+
+| Exception | HTTP status |
+|---|---|
+| `RateLimitError` | 429 |
+| `PageNotFoundError` | 404 |
+| `ConfigurationError` | 500 |
+| `TokenError` | 500 |
+| `PermissionError` | 403 |
+| `FacebookAPIError` (generic) | 502 |
+
+`ConfigurationError` is raised by `get_page_id()` when `FB_PAGE_ID` is missing from the environment. `TokenError` is raised by `_get_access_token()` when `FB_ACCESS_TOKEN` is missing.
+
+**Post normalisation** — `_normalize_post()` maps raw Graph API fields to a clean dict. The `message` field falls back to `story` (used for shared posts and events that have no message text).
 
 ---
 
@@ -159,13 +173,13 @@ This means it does not pollute any global variables on the host page.
 
 **Removing the div** removes the widget — the script renders into whatever divs exist at load time.
 
-**Multiple widgets** on the same page just means multiple divs — the script loads once and handles all of them.
+**Multiple widgets** on the same page just means multiple divs — the script loads once and handles all of them. A single shared `fetchPromise` is used across all widgets so only one HTTP request is made to `/api/posts` per page load, regardless of how many `<div class="fb-widget">` elements are present.
+
+**DOM construction** — A `buildElement(tag, props, ...children)` helper creates and assembles DOM nodes. All user-supplied text is set via `textContent` (never `innerHTML`), which prevents XSS attacks without a separate escape function.
 
 **CSS** uses custom properties (`--fbw-*`) for theming. `fbw-light` and `fbw-dark` classes define the theme variables, all components inherit them automatically.
 
-**All text** is passed through `escapeHtml()` before being inserted into the DOM — prevents XSS attacks.
-
-**"See more"** — Long texts are clamped to 4 lines with CSS (`-webkit-line-clamp`). A `setTimeout(0)` defers the height check until the element has layout. If clipped, a "See more" button appears.
+**"See more" / "See less"** — Long texts are clamped to 4 lines with CSS (`-webkit-line-clamp`). A `setTimeout(0)` defers the height check until the element has layout. If clipped, a "See more" button appears; clicking it expands the text and changes the button label to "See less".
 
 ---
 
