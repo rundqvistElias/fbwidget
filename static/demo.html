@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Facebook Page Widget Demo</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 700px; margin: 40px auto; padding: 0 20px; color: #333; }
+    h1 { font-size: 1.6rem; }
+    pre { background: #f4f4f4; padding: 16px; border-radius: 6px; overflow-x: auto; font-size: 0.85rem; }
+    h2 { margin-top: 2rem; font-size: 1.2rem; }
+  </style>
+</head>
+<body>
+  <h1>Facebook Page Widget</h1>
+  <p>Embed recent posts from your Facebook page with a single <code>&lt;script&gt;</code> tag.</p>
+
+  <h2>Embed Code</h2>
+  <pre>&lt;!-- Load once in your &lt;head&gt; --&gt;
+&lt;script src="__BASE_URL__/widget.js" defer&gt;&lt;/script&gt;
+
+&lt;!-- Place anywhere in your page --&gt;
+&lt;div class="fb-widget" data-limit="5" data-theme="light"&gt;&lt;/div&gt;</pre>
+
+  <h2>Parameters</h2>
+  <ul>
+    <li><code>data-limit</code> — Number of posts, 1–20 (default: 5)</li>
+    <li><code>data-theme</code> — <code>light</code> or <code>dark</code> (default: light)</li>
+  </ul>
+
+  <h2>Live Demo</h2>
+  <div class="fb-widget" data-limit="5" data-theme="light"></div>
+  <script src="/widget.js" defer></script>
+</body>
+</html>
