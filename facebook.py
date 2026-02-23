@@ -65,6 +65,11 @@ def get_page_id() -> str:
     return page_id
 
 
+def validate_config() -> None:
+    get_page_id()
+    _get_access_token()
+
+
 def _raise_for_api_error(data: dict) -> None:
     err = data.get("error")
     if not err:

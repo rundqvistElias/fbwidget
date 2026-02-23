@@ -29,6 +29,7 @@ DEMO_HTML = Path(__file__).parent / "static" / "demo.html"
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    fb.validate_config()
     yield
     await fb.close_client()
 
@@ -42,6 +43,11 @@ app.add_middleware(
     allow_methods=["GET"],
     allow_headers=["*"],
 )
+
+
+@app.get("/health")
+async def health():
+    return {"status": "ok"}
 
 
 @app.get("/", response_class=HTMLResponse)
