@@ -58,15 +58,7 @@ def _get_access_token() -> str:
     return token
 
 
-def get_page_id() -> str:
-    page_id = os.getenv("FB_PAGE_ID", "").strip()
-    if not page_id:
-        raise ConfigurationError("FB_PAGE_ID not set in .env")
-    return page_id
-
-
 def validate_config() -> None:
-    get_page_id()
     _get_access_token()
 
 

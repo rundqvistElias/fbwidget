@@ -182,6 +182,10 @@
       <h2>Embed Code</h2>
       <div class="controls">
         <div class="control-group">
+          <label for="ctrl-page-id">data-page-id</label>
+          <input type="text" id="ctrl-page-id" placeholder="e.g. 123456789">
+        </div>
+        <div class="control-group">
           <label for="ctrl-limit">data-limit</label>
           <input type="number" id="ctrl-limit" value="9" min="1" max="20">
         </div>
@@ -207,6 +211,10 @@
     <section>
       <h2>Parameters</h2>
       <div class="params">
+        <div class="param-row">
+          <div class="param-name">data-page-id</div>
+          <div class="param-desc">Facebook page ID to fetch posts from (required)</div>
+        </div>
         <div class="param-row">
           <div class="param-name">data-limit</div>
           <div class="param-desc">Number of posts to fetch, 1–20 (default: 5)</div>
@@ -244,6 +252,7 @@
     (function () {
       const BASE_URL = '__BASE_URL__';
 
+      const pageIdInput = document.getElementById('ctrl-page-id');
       const limitInput = document.getElementById('ctrl-limit');
       const themeSelect = document.getElementById('ctrl-theme');
       const onlyInput = document.getElementById('ctrl-only');
@@ -252,12 +261,14 @@
       const widgetEl = document.getElementById('live-widget');
 
       function buildEmbedCode() {
+        const pageId = pageIdInput.value.trim();
         const limit = limitInput.value;
         const theme = themeSelect.value;
         const only = onlyInput.value.trim();
         const skip = skipInput.value.trim();
 
-        let attrs = ' data-limit="' + limit + '" data-theme="' + theme + '"';
+        let attrs = (pageId ? ' data-page-id="' + pageId + '"' : ' data-page-id="YOUR_PAGE_ID"');
+        attrs += ' data-limit="' + limit + '" data-theme="' + theme + '"';
         if (only) attrs += ' data-only-keywords="' + only + '"';
         if (skip) attrs += ' data-skip-keywords="' + skip + '"';
 
@@ -270,14 +281,16 @@
       }
 
       function applyToWidget() {
+        const newPageId = pageIdInput.value.trim();
         const newLimit = limitInput.value;
         const only = onlyInput.value.trim();
         const skip = skipInput.value.trim();
 
-        if (newLimit !== widgetEl.dataset.limit) {
+        if (newPageId !== widgetEl.dataset.pageId || newLimit !== widgetEl.dataset.limit) {
           window.fbwidget.resetCache();
         }
 
+        widgetEl.dataset.pageId = newPageId;
         widgetEl.dataset.limit = newLimit;
         widgetEl.dataset.theme = themeSelect.value;
 
@@ -299,6 +312,7 @@
         debounceTimer = setTimeout(applyToWidget, 400);
       }
 
+      pageIdInput.addEventListener('input', onTextChange);
       limitInput.addEventListener('change', onInstantChange);
       themeSelect.addEventListener('change', onInstantChange);
       onlyInput.addEventListener('input', onTextChange);

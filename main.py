@@ -15,7 +15,7 @@ import facebook as fb
 load_dotenv(override=True)
 
 CACHE_TTL = int(os.getenv("CACHE_TTL_SECONDS", "300"))
-_cache: dict[int, tuple[float, dict]] = {}  # limit -> (expiry, payload)
+_cache: dict[tuple[str, int], tuple[float, dict]] = {}  # (page_id, limit) -> (expiry, payload)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -86,12 +86,13 @@ def _check_origin(request: Request) -> JSONResponse | None:
 async def api_posts(
     request: Request,
     limit: int = Query(5, ge=1, le=20),
+    page_id: str = Query(...),
 ):
     blocked = _check_origin(request)
     if blocked:
         return blocked
 
-    cached = _cache.get(limit)
+    cached = _cache.get((page_id, limit))
     if cached:
         expiry, payload = cached
         remaining = int(expiry - time.monotonic())
@@ -99,7 +100,6 @@ async def api_posts(
             return JSONResponse(payload, headers={"Cache-Control": f"public, max-age={remaining}"})
 
     try:
-        page_id = fb.get_page_id()
         page_info = await fb.get_page_info(page_id)
         posts = await fb.get_page_posts(page_id, limit=limit)
     except fb.RateLimitError as e:
@@ -119,7 +119,7 @@ async def api_posts(
         return JSONResponse({"error": str(e)}, status_code=500)
 
     payload = {"page": page_info, "posts": posts}
-    _cache[limit] = (time.monotonic() + CACHE_TTL, payload)
+    _cache[(page_id, limit)] = (time.monotonic() + CACHE_TTL, payload)
     return JSONResponse(payload, headers={"Cache-Control": f"public, max-age={CACHE_TTL}"})
 
 

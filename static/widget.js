@@ -179,20 +179,28 @@
     return card;
   }
 
-  // Single in-flight promise shared across all widgets on the page.
-  let fetchPromise = null;
+  // In-flight promises keyed by "pageId:limit" to deduplicate concurrent fetches.
+  const fetchCache = {};
 
-  function fetchPosts(limit) {
-    if (!fetchPromise) {
-      fetchPromise = fetch(API_BASE + '/api/posts?limit=' + limit)
+  function fetchPosts(pageId, limit) {
+    const key = pageId + ':' + limit;
+    if (!fetchCache[key]) {
+      fetchCache[key] = fetch(API_BASE + '/api/posts?page_id=' + encodeURIComponent(pageId) + '&limit=' + limit)
         .then(async function (response) { return { response, data: await response.json() }; });
     }
-    return fetchPromise;
+    return fetchCache[key];
   }
 
   async function renderWidget(container) {
+    const pageId = (container.dataset.pageId || '').trim();
     const limit = Math.min(20, Math.max(1, parseInt(container.dataset.limit || '5', 10)));
     const theme = container.dataset.theme === 'dark' ? 'dark' : 'light';
+
+    if (!pageId) {
+      container.className = 'fbw-wrap fbw-' + theme;
+      renderError(container, 'No page ID set. Add data-page-id to your widget element.');
+      return;
+    }
     const skipKeywords = (container.dataset.skipKeywords || '')
       .split(',')
       .map(k => k.trim().toLowerCase())
@@ -207,7 +215,7 @@
 
     let postsResponse;
     try {
-      postsResponse = await fetchPosts(limit);
+      postsResponse = await fetchPosts(pageId, limit);
     } catch (err) {
       console.error(err);
       renderError(container, 'Could not load posts.');
@@ -254,7 +262,7 @@
 
   window.fbwidget = {
     render: renderWidget,
-    resetCache: function () { fetchPromise = null; },
+    resetCache: function () { Object.keys(fetchCache).forEach(function (k) { delete fetchCache[k]; }); },
   };
 
 })();
