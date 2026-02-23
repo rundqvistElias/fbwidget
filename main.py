@@ -1,7 +1,9 @@
 import logging
 import os
+import time
 from contextlib import asynccontextmanager
 from pathlib import Path
+from urllib.parse import urlparse
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, Query, Request
@@ -11,6 +13,9 @@ from fastapi.responses import HTMLResponse, JSONResponse, Response
 import facebook as fb
 
 load_dotenv(override=True)
+
+CACHE_TTL = int(os.getenv("CACHE_TTL_SECONDS", "300"))
+_cache: dict[int, tuple[float, dict]] = {}  # limit -> (expiry, payload)
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -46,10 +51,47 @@ async def demo_page(request: Request):
     return HTMLResponse(html)
 
 
+def _check_origin(request: Request) -> JSONResponse | None:
+    """Return a 403 if the request origin isn't in the allowed list, else None.
+
+    Skipped entirely when CORS_ORIGINS=* (development / permissive mode).
+    Checks the Origin header first; falls back to Referer for clients that
+    omit Origin on same-origin or navigational requests.
+    """
+    if "*" in _cors_origins:
+        return None
+
+    origin = request.headers.get("origin")
+
+    if not origin:
+        referer = request.headers.get("referer", "")
+        parsed = urlparse(referer)
+        if parsed.scheme and parsed.netloc:
+            origin = f"{parsed.scheme}://{parsed.netloc}"
+
+    if origin and origin.rstrip("/") in _cors_origins:
+        return None
+
+    logger.warning("Blocked request with origin: %s", origin or "(none)")
+    return JSONResponse({"error": "Origin not allowed"}, status_code=403)
+
+
 @app.get("/api/posts")
 async def api_posts(
+    request: Request,
     limit: int = Query(5, ge=1, le=20),
 ):
+    blocked = _check_origin(request)
+    if blocked:
+        return blocked
+
+    cached = _cache.get(limit)
+    if cached:
+        expiry, payload = cached
+        remaining = int(expiry - time.monotonic())
+        if remaining > 0:
+            return JSONResponse(payload, headers={"Cache-Control": f"public, max-age={remaining}"})
+
     try:
         page_id = fb.get_page_id()
         page_info = await fb.get_page_info(page_id)
@@ -70,7 +112,9 @@ async def api_posts(
         logger.exception("Unexpected error fetching posts")
         return JSONResponse({"error": str(e)}, status_code=500)
 
-    return {"page": page_info, "posts": posts}
+    payload = {"page": page_info, "posts": posts}
+    _cache[limit] = (time.monotonic() + CACHE_TTL, payload)
+    return JSONResponse(payload, headers={"Cache-Control": f"public, max-age={CACHE_TTL}"})
 
 
 @app.get("/widget.js")
