@@ -210,10 +210,11 @@
   // In-flight promises keyed by "pageId:limit" to deduplicate concurrent fetches.
   const fetchCache = {};
 
-  function fetchPosts(pageId, limit) {
-    const key = pageId + ':' + limit;
+  function fetchPosts(pageId, limit, apiKey) {
+    const key = pageId + ':' + limit + ':' + apiKey;
     if (!fetchCache[key]) {
-      fetchCache[key] = fetch(API_BASE + '/api/posts?page_id=' + encodeURIComponent(pageId) + '&limit=' + limit)
+      const opts = apiKey ? { headers: { 'X-Api-Key': apiKey } } : {};
+      fetchCache[key] = fetch(API_BASE + '/api/posts?page_id=' + encodeURIComponent(pageId) + '&limit=' + limit, opts)
         .then(async function (response) { return { response, data: await response.json() }; });
     }
     return fetchCache[key];
@@ -224,6 +225,7 @@
     const limit = Math.min(20, Math.max(1, parseInt(container.dataset.limit || '5', 10)));
     const SKINS = ['light', 'dark', 'vivid'];
     const skin = SKINS.includes(container.dataset.skin) ? container.dataset.skin : 'light';
+    const apiKey = (container.dataset.apiKey || '').trim();
 
     if (!pageId) {
       container.className = 'fbw-wrap fbw-' + skin;
@@ -246,7 +248,7 @@
 
     let postsResponse;
     try {
-      postsResponse = await fetchPosts(pageId, limit);
+      postsResponse = await fetchPosts(pageId, limit, apiKey);
     } catch (err) {
       console.error(err);
       renderError(container, 'Could not load posts.');

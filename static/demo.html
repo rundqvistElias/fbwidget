@@ -100,6 +100,7 @@
 
     .control-group input[type="number"] { width: 72px; }
     .control-group input[type="text"]   { width: 260px; }
+    .control-group input[type="text"].api-key-input { width: 200px; }
     .control-group input[type="color"]  { width: 44px; height: 32px; padding: 2px 3px; cursor: pointer; }
 
     .color-pair { display: flex; gap: 4px; align-items: center; }
@@ -302,6 +303,10 @@
             <input type="number" id="ctrl-limit" value="9" min="1" max="20">
           </div>
           <div class="control-group">
+            <label for="ctrl-api-key">data-api-key</label>
+            <input type="text" id="ctrl-api-key" class="api-key-input" placeholder="your secret key">
+          </div>
+          <div class="control-group">
             <label for="ctrl-only">data-only-keywords</label>
             <input type="text" id="ctrl-only" placeholder="e.g. event,konsert">
           </div>
@@ -379,6 +384,10 @@
           <div class="param-desc">Facebook page ID to fetch posts from (required)</div>
         </div>
         <div class="param-row">
+          <div class="param-name">data-api-key</div>
+          <div class="param-desc">API key authorising this domain. Must match the key configured for your domain in <code>API_KEYS</code> on the server. Required when <code>API_KEYS</code> is set.</div>
+        </div>
+        <div class="param-row">
           <div class="param-name">data-limit</div>
           <div class="param-desc">Number of posts to fetch, 1–20 (default: 5)</div>
         </div>
@@ -429,6 +438,7 @@
 
       const pageIdInput  = document.getElementById('ctrl-page-id');
       const limitInput   = document.getElementById('ctrl-limit');
+      const apiKeyInput  = document.getElementById('ctrl-api-key');
       const onlyInput    = document.getElementById('ctrl-only');
       const skipInput    = document.getElementById('ctrl-skip');
       const codeBlock    = document.getElementById('embed-code');
@@ -471,12 +481,14 @@
       function buildEmbedCode() {
         const pageId = pageIdInput.value.trim();
         const limit  = limitInput.value;
+        const apiKey = apiKeyInput.value.trim();
         const skin   = activeSkin();
         const only   = onlyInput.value.trim();
         const skip   = skipInput.value.trim();
         const d      = SKIN_DEFAULTS[skin];
 
         let attrs = pageId ? ' data-page-id="' + pageId + '"' : ' data-page-id="YOUR_PAGE_ID"';
+        if (apiKey) attrs += ' data-api-key="' + apiKey + '"';
         attrs += ' data-limit="' + limit + '" data-skin="' + skin + '"';
         if (only) attrs += ' data-only-keywords="' + only + '"';
         if (skip) attrs += ' data-skip-keywords="' + skip + '"';
@@ -497,6 +509,7 @@
       function applyToWidget() {
         const newPageId = pageIdInput.value.trim();
         const newLimit  = limitInput.value;
+        const apiKey    = apiKeyInput.value.trim();
         const skin      = activeSkin();
         const only      = onlyInput.value.trim();
         const skip      = skipInput.value.trim();
@@ -509,6 +522,7 @@
         widgetEl.dataset.pageId = newPageId;
         widgetEl.dataset.limit  = newLimit;
         widgetEl.dataset.skin   = skin;
+        if (apiKey) { widgetEl.dataset.apiKey = apiKey; } else { delete widgetEl.dataset.apiKey; }
 
         if (only) { widgetEl.dataset.onlyKeywords = only; } else { delete widgetEl.dataset.onlyKeywords; }
         if (skip) { widgetEl.dataset.skipKeywords = skip; } else { delete widgetEl.dataset.skipKeywords; }
@@ -535,6 +549,7 @@
       // ── Event listeners ────────────────────────────────────────────────
       pageIdInput.addEventListener('input', onTextChange);
       limitInput.addEventListener('change', onInstantChange);
+      apiKeyInput.addEventListener('input', onTextChange);
       onlyInput.addEventListener('input', onTextChange);
       skipInput.addEventListener('input', onTextChange);
 

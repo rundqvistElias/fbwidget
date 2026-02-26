@@ -93,7 +93,10 @@ async def get_page_info(page_id: str) -> dict:
     logger.info("FB get_page_info: page_id=%s", page_id)
     resp = await _get_client().get(
         f"{GRAPH_API_BASE}/{page_id}",
-        params={"fields": "id,name,picture.type(normal)", "access_token": _get_access_token()},
+        params={
+            "fields": "id,name,picture.type(normal)",
+            "access_token": _get_access_token(),
+        },
     )
     data = resp.json()
     _raise_for_api_error(data)
