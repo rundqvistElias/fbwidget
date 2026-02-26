@@ -184,7 +184,7 @@ def _validate_api_key(request: Request) -> JSONResponse | None:
         )
         return JSONResponse({"error": "Invalid API key"}, status_code=401)
 
-    if not request_origin or request_origin != allowed_domain:
+    if request_origin and request_origin != allowed_domain:
         logger.warning(
             "Auth rejected — origin mismatch: key=%s… expected=%s got=%s",
             api_key[:8],
