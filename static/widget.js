@@ -7,6 +7,7 @@
     // Themes
     '.fbw-light{--fbw-bg:#f0f2f5;--fbw-card:#fff;--fbw-border:#e4e6eb;--fbw-text:#1c1e21;--fbw-sub:#65676b;--fbw-btn:#e4e6eb;--fbw-btn-text:#050505;--fbw-accent:#1877f2;}',
     '.fbw-dark{--fbw-bg:#18191a;--fbw-card:#242526;--fbw-border:#3a3b3c;--fbw-text:#e4e6eb;--fbw-sub:#b0b3b8;--fbw-btn:#3a3b3c;--fbw-btn-text:#e4e6eb;--fbw-accent:#4599ff;}',
+    '.fbw-vivid{--fbw-bg:#eef2ff;--fbw-card:#fff;--fbw-border:#c7d2fe;--fbw-text:#1e1b4b;--fbw-sub:#6366f1;--fbw-btn:#e0e7ff;--fbw-btn-text:#1e1b4b;--fbw-accent:#4f46e5;}',
     // Wrapper — fills available host width; container query anchor for inner elements
     '.fbw-wrap{width:100%;background:var(--fbw-bg);border-radius:12px;padding:12px;box-sizing:border-box;font-family:system-ui,-apple-system,sans-serif;font-size:14px;line-height:1.5;container-type:inline-size;}',
     // Header
@@ -50,6 +51,33 @@
     styleEl.id = 'fbw-styles';
     styleEl.textContent = CSS;
     document.head.appendChild(styleEl);
+  }
+
+  function lightenHex(hex) {
+    if (!/^#[0-9a-fA-F]{6}$/.test(hex)) return hex;
+    const r = Math.min(255, Math.round(parseInt(hex.slice(1, 3), 16) * 1.08 + 8));
+    const g = Math.min(255, Math.round(parseInt(hex.slice(3, 5), 16) * 1.08 + 8));
+    const b = Math.min(255, Math.round(parseInt(hex.slice(5, 7), 16) * 1.08 + 8));
+    return '#' + [r, g, b].map(c => c.toString(16).padStart(2, '0')).join('');
+  }
+
+  function applyCustomColors(container) {
+    const bg = container.dataset.colorBg;
+    if (bg) {
+      container.style.setProperty('--fbw-bg', bg);
+      container.style.setProperty('--fbw-card', lightenHex(bg));
+    } else {
+      container.style.removeProperty('--fbw-bg');
+      container.style.removeProperty('--fbw-card');
+    }
+
+    const text = container.dataset.colorText;
+    if (text) container.style.setProperty('--fbw-text', text);
+    else container.style.removeProperty('--fbw-text');
+
+    const accent = container.dataset.colorAccent;
+    if (accent) container.style.setProperty('--fbw-accent', accent);
+    else container.style.removeProperty('--fbw-accent');
   }
 
   // Minimal DOM builder: buildElement('div', { className: 'foo' }, child1, child2)
@@ -194,10 +222,12 @@
   async function renderWidget(container) {
     const pageId = (container.dataset.pageId || '').trim();
     const limit = Math.min(20, Math.max(1, parseInt(container.dataset.limit || '5', 10)));
-    const theme = container.dataset.theme === 'dark' ? 'dark' : 'light';
+    const SKINS = ['light', 'dark', 'vivid'];
+    const skin = SKINS.includes(container.dataset.skin) ? container.dataset.skin : 'light';
 
     if (!pageId) {
-      container.className = 'fbw-wrap fbw-' + theme;
+      container.className = 'fbw-wrap fbw-' + skin;
+      applyCustomColors(container);
       renderError(container, 'No page ID set. Add data-page-id to your widget element.');
       return;
     }
@@ -210,7 +240,8 @@
       .map(k => k.trim().toLowerCase())
       .filter(Boolean);
 
-    container.className = 'fbw-wrap fbw-' + theme;
+    container.className = 'fbw-wrap fbw-' + skin;
+    applyCustomColors(container);
     renderLoading(container);
 
     let postsResponse;

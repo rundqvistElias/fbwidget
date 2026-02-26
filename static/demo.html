@@ -54,10 +54,16 @@
     /* ── Controls ── */
     .controls {
       display: flex;
+      flex-direction: column;
+      gap: 16px;
+      margin-bottom: 12px;
+    }
+
+    .controls-row {
+      display: flex;
       flex-wrap: wrap;
       gap: 12px;
       align-items: flex-end;
-      margin-bottom: 12px;
     }
 
     .control-group {
@@ -94,6 +100,110 @@
 
     .control-group input[type="number"] { width: 72px; }
     .control-group input[type="text"]   { width: 260px; }
+    .control-group input[type="color"]  { width: 44px; height: 32px; padding: 2px 3px; cursor: pointer; }
+
+    .color-pair { display: flex; gap: 4px; align-items: center; }
+
+    .hex-input {
+      width: 82px;
+      font-family: ui-monospace, 'SF Mono', monospace;
+      font-size: 12.5px;
+      padding: 6px 8px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      background: #fff;
+      color: #111;
+      outline: none;
+    }
+    .hex-input:focus { border-color: #1877f2; box-shadow: 0 0 0 3px rgba(24,119,242,0.12); }
+    .hex-input.invalid { border-color: #ef4444; box-shadow: 0 0 0 3px rgba(239,68,68,0.12); }
+
+    /* ── Skin picker ── */
+    .skin-picker {
+      display: flex;
+      gap: 8px;
+    }
+
+    .skin-btn {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 5px;
+      padding: 7px 10px;
+      border: 2px solid #e5e7eb;
+      border-radius: 10px;
+      background: #fff;
+      cursor: pointer;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+
+    .skin-btn:hover { border-color: #9ca3af; }
+
+    .skin-btn.active {
+      border-color: #1877f2;
+      box-shadow: 0 0 0 3px rgba(24,119,242,0.12);
+    }
+
+    .skin-name {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: #6b7280;
+    }
+
+    .skin-btn.active .skin-name { color: #1877f2; }
+
+    /* Mini preview card inside skin button */
+    .skin-preview {
+      width: 72px;
+      height: 42px;
+      border-radius: 6px;
+      padding: 5px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      position: relative;
+    }
+
+    .skin-preview-card {
+      flex: 1;
+      border-radius: 3px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: flex-end;
+      padding: 2px;
+    }
+
+    .skin-preview-btn {
+      width: 20px;
+      height: 6px;
+      border-radius: 2px;
+    }
+
+    /* Light skin preview */
+    .sp-light { background: #f0f2f5; }
+    .sp-light .skin-preview-card { background: #fff; border: 1px solid #e4e6eb; }
+    .sp-light .skin-preview-btn  { background: #1877f2; }
+
+    /* Dark skin preview */
+    .sp-dark { background: #18191a; }
+    .sp-dark .skin-preview-card { background: #242526; border: 1px solid #3a3b3c; }
+    .sp-dark .skin-preview-btn  { background: #4599ff; }
+
+    /* Vivid skin preview */
+    .sp-vivid { background: #eef2ff; border: 1px solid #c7d2fe; }
+    .sp-vivid .skin-preview-card { background: #fff; border: 1px solid #c7d2fe; }
+    .sp-vivid .skin-preview-btn  { background: #4f46e5; }
+
+    /* ── Color overrides row ── */
+    .divider {
+      width: 1px;
+      height: 32px;
+      background: #e5e7eb;
+      align-self: flex-end;
+      margin-bottom: 0;
+    }
 
     /* ── Code block ── */
     pre {
@@ -181,28 +291,81 @@
     <section>
       <h2>Embed Code</h2>
       <div class="controls">
-        <div class="control-group">
-          <label for="ctrl-page-id">data-page-id</label>
-          <input type="text" id="ctrl-page-id" placeholder="e.g. 123456789">
+        <!-- Row 1: page / limit / keywords -->
+        <div class="controls-row">
+          <div class="control-group">
+            <label for="ctrl-page-id">data-page-id</label>
+            <input type="text" id="ctrl-page-id" placeholder="e.g. 123456789">
+          </div>
+          <div class="control-group">
+            <label for="ctrl-limit">data-limit</label>
+            <input type="number" id="ctrl-limit" value="9" min="1" max="20">
+          </div>
+          <div class="control-group">
+            <label for="ctrl-only">data-only-keywords</label>
+            <input type="text" id="ctrl-only" placeholder="e.g. event,konsert">
+          </div>
+          <div class="control-group">
+            <label for="ctrl-skip">data-skip-keywords</label>
+            <input type="text" id="ctrl-skip" placeholder="e.g. menu,meny,specials">
+          </div>
         </div>
-        <div class="control-group">
-          <label for="ctrl-limit">data-limit</label>
-          <input type="number" id="ctrl-limit" value="9" min="1" max="20">
-        </div>
-        <div class="control-group">
-          <label for="ctrl-theme">data-theme</label>
-          <select id="ctrl-theme">
-            <option value="light">light</option>
-            <option value="dark">dark</option>
-          </select>
-        </div>
-        <div class="control-group">
-          <label for="ctrl-only">data-only-keywords</label>
-          <input type="text" id="ctrl-only" placeholder="e.g. event,konsert">
-        </div>
-        <div class="control-group">
-          <label for="ctrl-skip">data-skip-keywords</label>
-          <input type="text" id="ctrl-skip" placeholder="e.g. menu,meny,specials">
+
+        <!-- Row 2: skin + color overrides -->
+        <div class="controls-row">
+          <div class="control-group">
+            <label>data-skin</label>
+            <div class="skin-picker">
+              <button class="skin-btn active" data-skin="light" type="button">
+                <div class="skin-preview sp-light">
+                  <div class="skin-preview-card">
+                    <div class="skin-preview-btn"></div>
+                  </div>
+                </div>
+                <span class="skin-name">Light</span>
+              </button>
+              <button class="skin-btn" data-skin="dark" type="button">
+                <div class="skin-preview sp-dark">
+                  <div class="skin-preview-card">
+                    <div class="skin-preview-btn"></div>
+                  </div>
+                </div>
+                <span class="skin-name">Dark</span>
+              </button>
+              <button class="skin-btn" data-skin="vivid" type="button">
+                <div class="skin-preview sp-vivid">
+                  <div class="skin-preview-card">
+                    <div class="skin-preview-btn"></div>
+                  </div>
+                </div>
+                <span class="skin-name">Vivid</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="control-group">
+            <label for="cp-bg">Background</label>
+            <div class="color-pair">
+              <input type="color" id="cp-bg">
+              <input type="text" id="hex-bg" class="hex-input" maxlength="7" spellcheck="false">
+            </div>
+          </div>
+          <div class="control-group">
+            <label for="cp-text">Text</label>
+            <div class="color-pair">
+              <input type="color" id="cp-text">
+              <input type="text" id="hex-text" class="hex-input" maxlength="7" spellcheck="false">
+            </div>
+          </div>
+          <div class="control-group">
+            <label for="cp-accent">Facebook button</label>
+            <div class="color-pair">
+              <input type="color" id="cp-accent">
+              <input type="text" id="hex-accent" class="hex-input" maxlength="7" spellcheck="false">
+            </div>
+          </div>
         </div>
       </div>
       <pre id="embed-code"></pre>
@@ -220,8 +383,20 @@
           <div class="param-desc">Number of posts to fetch, 1–20 (default: 5)</div>
         </div>
         <div class="param-row">
-          <div class="param-name">data-theme</div>
-          <div class="param-desc"><code>light</code> or <code>dark</code> (default: light)</div>
+          <div class="param-name">data-skin</div>
+          <div class="param-desc"><code>light</code>, <code>dark</code>, or <code>vivid</code> (default: light)</div>
+        </div>
+        <div class="param-row">
+          <div class="param-name">data-color-bg</div>
+          <div class="param-desc">Override the background color. Accepts any CSS color value (hex, rgb, hsl, named).</div>
+        </div>
+        <div class="param-row">
+          <div class="param-name">data-color-text</div>
+          <div class="param-desc">Override the primary text color.</div>
+        </div>
+        <div class="param-row">
+          <div class="param-name">data-color-accent</div>
+          <div class="param-desc">Override the accent / Follow button color.</div>
         </div>
         <div class="param-row">
           <div class="param-name">data-only-keywords</div>
@@ -242,7 +417,7 @@
         <span class="bp-pill"><span class="bp-dot desktop"></span> ≥ 1024px — 3 columns</span>
       </div>
       <p class="demo-hint">Resize the browser window to see all three layouts.</p>
-      <div id="live-widget" class="fb-widget" data-limit="9" data-theme="light"></div>
+      <div id="live-widget" class="fb-widget" data-limit="9" data-skin="light"></div>
     </section>
 
   </main>
@@ -252,25 +427,63 @@
     (function () {
       const BASE_URL = '__BASE_URL__';
 
-      const pageIdInput = document.getElementById('ctrl-page-id');
-      const limitInput = document.getElementById('ctrl-limit');
-      const themeSelect = document.getElementById('ctrl-theme');
-      const onlyInput = document.getElementById('ctrl-only');
-      const skipInput = document.getElementById('ctrl-skip');
-      const codeBlock = document.getElementById('embed-code');
-      const widgetEl = document.getElementById('live-widget');
+      const pageIdInput  = document.getElementById('ctrl-page-id');
+      const limitInput   = document.getElementById('ctrl-limit');
+      const onlyInput    = document.getElementById('ctrl-only');
+      const skipInput    = document.getElementById('ctrl-skip');
+      const codeBlock    = document.getElementById('embed-code');
+      const widgetEl     = document.getElementById('live-widget');
 
+      const skinBtns     = document.querySelectorAll('.skin-btn');
+      const cpBg         = document.getElementById('cp-bg');
+      const cpText       = document.getElementById('cp-text');
+      const cpAccent     = document.getElementById('cp-accent');
+      const hexBg        = document.getElementById('hex-bg');
+      const hexText      = document.getElementById('hex-text');
+      const hexAccent    = document.getElementById('hex-accent');
+
+      // ── Skin defaults ──────────────────────────────────────────────────
+      const SKIN_DEFAULTS = {
+        light: { bg: '#f0f2f5', text: '#1c1e21', accent: '#1877f2' },
+        dark:  { bg: '#18191a', text: '#e4e6eb', accent: '#4599ff' },
+        vivid: { bg: '#eef2ff', text: '#1e1b4b', accent: '#4f46e5' },
+      };
+
+      function activeSkin() {
+        return document.querySelector('.skin-btn.active').dataset.skin;
+      }
+
+      function parseHex(val) {
+        const v = val.trim().replace(/^#/, '');
+        return /^[0-9a-fA-F]{6}$/.test(v) ? '#' + v.toLowerCase() : null;
+      }
+
+      function syncPickersToSkin() {
+        const d = SKIN_DEFAULTS[activeSkin()];
+        cpBg.value     = d.bg;     hexBg.value     = d.bg;     hexBg.classList.remove('invalid');
+        cpText.value   = d.text;   hexText.value   = d.text;   hexText.classList.remove('invalid');
+        cpAccent.value = d.accent; hexAccent.value = d.accent; hexAccent.classList.remove('invalid');
+      }
+
+      syncPickersToSkin();
+
+      // ── Embed code ─────────────────────────────────────────────────────
       function buildEmbedCode() {
         const pageId = pageIdInput.value.trim();
-        const limit = limitInput.value;
-        const theme = themeSelect.value;
-        const only = onlyInput.value.trim();
-        const skip = skipInput.value.trim();
+        const limit  = limitInput.value;
+        const skin   = activeSkin();
+        const only   = onlyInput.value.trim();
+        const skip   = skipInput.value.trim();
+        const d      = SKIN_DEFAULTS[skin];
 
-        let attrs = (pageId ? ' data-page-id="' + pageId + '"' : ' data-page-id="YOUR_PAGE_ID"');
-        attrs += ' data-limit="' + limit + '" data-theme="' + theme + '"';
+        let attrs = pageId ? ' data-page-id="' + pageId + '"' : ' data-page-id="YOUR_PAGE_ID"';
+        attrs += ' data-limit="' + limit + '" data-skin="' + skin + '"';
         if (only) attrs += ' data-only-keywords="' + only + '"';
         if (skip) attrs += ' data-skip-keywords="' + skip + '"';
+
+        if (cpBg.value.toLowerCase()     !== d.bg.toLowerCase())     attrs += ' data-color-bg="'     + cpBg.value     + '"';
+        if (cpText.value.toLowerCase()   !== d.text.toLowerCase())   attrs += ' data-color-text="'   + cpText.value   + '"';
+        if (cpAccent.value.toLowerCase() !== d.accent.toLowerCase()) attrs += ' data-color-accent="' + cpAccent.value + '"';
 
         return (
           '<!-- Load once in your <head> -->\n' +
@@ -280,22 +493,29 @@
         );
       }
 
+      // ── Live widget ─────────────────────────────────────────────────────
       function applyToWidget() {
         const newPageId = pageIdInput.value.trim();
-        const newLimit = limitInput.value;
-        const only = onlyInput.value.trim();
-        const skip = skipInput.value.trim();
+        const newLimit  = limitInput.value;
+        const skin      = activeSkin();
+        const only      = onlyInput.value.trim();
+        const skip      = skipInput.value.trim();
+        const d         = SKIN_DEFAULTS[skin];
 
         if (newPageId !== widgetEl.dataset.pageId || newLimit !== widgetEl.dataset.limit) {
           window.fbwidget.resetCache();
         }
 
         widgetEl.dataset.pageId = newPageId;
-        widgetEl.dataset.limit = newLimit;
-        widgetEl.dataset.theme = themeSelect.value;
+        widgetEl.dataset.limit  = newLimit;
+        widgetEl.dataset.skin   = skin;
 
         if (only) { widgetEl.dataset.onlyKeywords = only; } else { delete widgetEl.dataset.onlyKeywords; }
         if (skip) { widgetEl.dataset.skipKeywords = skip; } else { delete widgetEl.dataset.skipKeywords; }
+
+        if (cpBg.value.toLowerCase()     !== d.bg.toLowerCase())     { widgetEl.dataset.colorBg     = cpBg.value;     } else { delete widgetEl.dataset.colorBg;     }
+        if (cpText.value.toLowerCase()   !== d.text.toLowerCase())   { widgetEl.dataset.colorText   = cpText.value;   } else { delete widgetEl.dataset.colorText;   }
+        if (cpAccent.value.toLowerCase() !== d.accent.toLowerCase()) { widgetEl.dataset.colorAccent = cpAccent.value; } else { delete widgetEl.dataset.colorAccent; }
 
         window.fbwidget.render(widgetEl);
       }
@@ -312,11 +532,42 @@
         debounceTimer = setTimeout(applyToWidget, 400);
       }
 
+      // ── Event listeners ────────────────────────────────────────────────
       pageIdInput.addEventListener('input', onTextChange);
       limitInput.addEventListener('change', onInstantChange);
-      themeSelect.addEventListener('change', onInstantChange);
       onlyInput.addEventListener('input', onTextChange);
       skipInput.addEventListener('input', onTextChange);
+
+      skinBtns.forEach(function (btn) {
+        btn.addEventListener('click', function () {
+          skinBtns.forEach(function (b) { b.classList.remove('active'); });
+          btn.classList.add('active');
+          syncPickersToSkin();
+          onInstantChange();
+        });
+      });
+
+      function wireColorPair(picker, hexInput) {
+        picker.addEventListener('input', function () {
+          hexInput.value = picker.value;
+          hexInput.classList.remove('invalid');
+          onInstantChange();
+        });
+        hexInput.addEventListener('input', function () {
+          const hex = parseHex(hexInput.value);
+          if (hex) {
+            picker.value = hex;
+            hexInput.classList.remove('invalid');
+            onInstantChange();
+          } else {
+            hexInput.classList.add('invalid');
+          }
+        });
+      }
+
+      wireColorPair(cpBg, hexBg);
+      wireColorPair(cpText, hexText);
+      wireColorPair(cpAccent, hexAccent);
 
       codeBlock.textContent = buildEmbedCode();
     })();
