@@ -86,6 +86,8 @@ def _normalize_post(item: dict) -> dict:
         "created_time": item.get("created_time", ""),
         "full_picture": item.get("full_picture"),
         "permalink_url": item.get("permalink_url", ""),
+        "like_count": item.get("reactions", {}).get("summary", {}).get("total_count", 0),
+        "comment_count": item.get("comments", {}).get("summary", {}).get("total_count", 0),
     }
 
 
@@ -112,7 +114,7 @@ async def get_page_posts(page_id: str, limit: int = 5) -> list[dict]:
     resp = await _get_client().get(
         f"{GRAPH_API_BASE}/{page_id}/posts",
         params={
-            "fields": "message,story,created_time,full_picture,permalink_url",
+            "fields": "message,story,created_time,full_picture,permalink_url,reactions.summary(true),comments.summary(true)",
             "limit": limit,
             "access_token": _get_access_token(),
         },

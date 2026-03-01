@@ -32,6 +32,8 @@
     '.fbw-expand-btn{background:none;border:none;color:var(--fbw-accent);cursor:pointer;padding:4px 0 0;font-size:13px;font-family:inherit;}',
     '.fbw-card-img{width:100%;display:block;max-height:400px;object-fit:cover;}',
     '.fbw-card-footer{padding:8px 12px;}',
+    '.fbw-engagement{display:flex;gap:12px;margin-bottom:8px;color:var(--fbw-sub);font-size:12px;}',
+    '.fbw-engagement-stat{display:inline-flex;align-items:center;gap:3px;}',
     '.fbw-view-btn{display:inline-block;padding:6px 14px;border-radius:6px;background:var(--fbw-btn);color:var(--fbw-btn-text);text-decoration:none;font-size:13px;font-weight:600;}',
     // States
     '.fbw-loading{display:flex;align-items:center;justify-content:center;padding:40px;}',
@@ -187,8 +189,40 @@
     });
   }
 
+  const SVG_NS = 'http://www.w3.org/2000/svg';
+  const ICON_LIKE    = 'M1 21h4V9H1v12zm22-11c0-1.1-.9-2-2-2h-6.31l.95-4.57.03-.32c0-.41-.17-.79-.44-1.06L14.17 1 7.59 7.59C7.22 7.95 7 8.45 7 9v10c0 1.1.9 2 2 2h9c.83 0 1.54-.5 1.84-1.22l3.02-7.05c.09-.23.14-.47.14-.73v-2z';
+  const ICON_COMMENT = 'M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z';
+
+  function buildSvgIcon(pathD) {
+    const svg = document.createElementNS(SVG_NS, 'svg');
+    svg.setAttribute('width', '14');
+    svg.setAttribute('height', '14');
+    svg.setAttribute('viewBox', '0 0 24 24');
+    svg.setAttribute('fill', 'currentColor');
+    const path = document.createElementNS(SVG_NS, 'path');
+    path.setAttribute('d', pathD);
+    svg.appendChild(path);
+    return svg;
+  }
+
+  function buildEngagementStat(iconPath, count) {
+    const wrapper = buildElement('span', { className: 'fbw-engagement-stat' });
+    wrapper.appendChild(buildSvgIcon(iconPath));
+    wrapper.appendChild(document.createTextNode('\u00a0' + count));
+    return wrapper;
+  }
+
   function buildCardFooter(post) {
+    const hasEngagement = post.like_count > 0 || post.comment_count > 0;
+    const engagement = hasEngagement
+      ? buildElement('div', { className: 'fbw-engagement' },
+          post.like_count > 0 ? buildEngagementStat(ICON_LIKE, post.like_count) : null,
+          post.comment_count > 0 ? buildEngagementStat(ICON_COMMENT, post.comment_count) : null,
+        )
+      : null;
+
     return buildElement('div', { className: 'fbw-card-footer' },
+      engagement,
       buildElement('a', {
         className: 'fbw-view-btn',
         href: post.permalink_url,
@@ -257,7 +291,8 @@
     const { response, data } = postsResponse;
 
     if (!response.ok) {
-      renderError(container, data.error || 'Error ' + response.status);
+      const message = response.status >= 500 ? 'Could not load posts.' : (data.error || 'Error ' + response.status);
+      renderError(container, message);
       return;
     }
 
