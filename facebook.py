@@ -1,11 +1,16 @@
 import logging
 import os
+import re
 
 import httpx
 
 logger = logging.getLogger(__name__)
 
 GRAPH_API_BASE = "https://graph.facebook.com/v19.0"
+
+# Facebook page IDs are numeric; vanity slugs are alphanumeric with dots/hyphens.
+# Reject anything else before it reaches a URL.
+_PAGE_ID_RE = re.compile(r'^[A-Za-z0-9][\w.\-]{0,99}$')
 
 _RATE_LIMIT_CODES = frozenset({4, 17, 32, 613})
 _PERMISSION_CODES = frozenset({10, *range(200, 300)})
@@ -92,6 +97,8 @@ def _normalize_post(item: dict) -> dict:
 
 
 async def get_page_info(page_id: str) -> dict:
+    if not _PAGE_ID_RE.match(page_id):
+        raise PageNotFoundError(f"Invalid page_id: {page_id!r}")
     logger.info("FB get_page_info: page_id=%s", page_id)
     resp = await _get_client().get(
         f"{GRAPH_API_BASE}/{page_id}",
@@ -110,6 +117,8 @@ async def get_page_info(page_id: str) -> dict:
 
 
 async def get_page_posts(page_id: str, limit: int = 5) -> list[dict]:
+    if not _PAGE_ID_RE.match(page_id):
+        raise PageNotFoundError(f"Invalid page_id: {page_id!r}")
     logger.info("FB get_page_posts: page_id=%s limit=%s", page_id, limit)
     resp = await _get_client().get(
         f"{GRAPH_API_BASE}/{page_id}/posts",

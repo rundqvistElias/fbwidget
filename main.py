@@ -249,6 +249,14 @@ async def widget_js(request: Request):
     )
 
 
+def _evict_expired_cache() -> None:
+    """Remove all expired entries from the posts cache."""
+    now = time.monotonic()
+    expired = [k for k, (expiry, _) in _posts_cache.items() if expiry <= now]
+    for k in expired:
+        del _posts_cache[k]
+
+
 def _get_cached_posts(page_id: str, limit: int) -> JSONResponse | None:
     """Return a cached response if one exists and has not yet expired."""
     entry = _posts_cache.get((page_id, limit))
@@ -294,6 +302,7 @@ async def api_posts(
         return JSONResponse({"error": "Internal server error"}, status_code=500)
 
     payload = {"page": page_info, "posts": posts}
+    _evict_expired_cache()
     _posts_cache[(page_id, limit)] = (time.monotonic() + CACHE_TTL_SECONDS, payload)
     return JSONResponse(
         payload, headers={"Cache-Control": f"public, max-age={CACHE_TTL_SECONDS}"}
