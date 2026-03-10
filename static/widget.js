@@ -221,11 +221,12 @@
         )
       : null;
 
+    const safeHref = /^https:\/\//.test(post.permalink_url) ? post.permalink_url : '#';
     return buildElement('div', { className: 'fbw-card-footer' },
       engagement,
       buildElement('a', {
         className: 'fbw-view-btn',
-        href: post.permalink_url,
+        href: safeHref,
         target: '_blank',
         rel: 'noopener noreferrer',
         textContent: 'View on Facebook',
